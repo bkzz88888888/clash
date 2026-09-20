@@ -111,18 +111,24 @@ hosts:
 dns:
   enable: true                                                          # 解析服务  启用 Clash 内置 DNS 服务
   ipv6: true                                                            # 网络协议  启用 IPv6 DNS 解析支持
+  use-hosts: true                                                       # 配置映射  使用 Mihomo 配置中的 hosts 映射
+  use-system-hosts: true                                                # 系统映射  使用操作系统 hosts 文件中的域名映射
+  cache-algorithm: arc                                                  # 缓存策略  DNS 按访问频率与最近使用情况动态淘汰缓存
   listen: 0.0.0.0:7874                                                  # 监听服务  DNS 服务监听地址与端口
   enhanced-mode: fake-ip                                                # 增强模式  FDNS 增强模式（Fake-IP，用于防止 DNS 泄露）
-  fake-ip-range: 198.18.0.1/16                                          # 虚拟地址  Fake-IP 虚拟地址池范围
+  fake-ip-range: 198.18.0.1/16                                          # 虚拟地址  Fake-IP IPv4虚拟地址池范围
+  fake-ip-range6: 2001:2::1/48                                          # 虚拟地址  Fake-IP IPv6虚拟地址池范围
   fake-ip-filter-mode: blacklist                                        # 过滤模式  Fake-IP 过滤模式（命中规则则返回真实 IP）
   respect-rules: false                                                  # 遵循规则  不强制遵循规则顺序
   fake-ip-filter:
     - "+.lan"                                                           # 真实解析  常见局域网域名后缀
+    - "+.local"                                                         # 真实解析  常见局域网域名后缀
     - "rule-set:add_direct_domain"                                      # 真实解析  大陆冷门域名
     - "geosite:cn"                                                      # 真实解析  大陆域 GeoSite 数据
   nameserver:                                                           # 解析服务  请使用运营商提供的 DNS
-    - 223.5.5.5
+    - 10.200.31.230
     - 114.114.114.114
+    - 223.5.5.5
 
 
 
@@ -137,7 +143,7 @@ proxy-groups:
   - {name: OneDrive,     <<: *Anchor_LD, icon: https://github.com/Seven1echo/Yaml/raw/main/icons/OneDrive.png}
   - {name: Microsoft,    <<: *Anchor_LD, icon: https://github.com/Seven1echo/Yaml/raw/main/icons/Microsoft.png}
   - {name: Apple,        <<: *Anchor_LD, icon: https://github.com/Seven1echo/Yaml/raw/main/icons/Apple.png}
-  - {name: Steam,        <<: *Anchor_LD, icon: https://github.com/Seven1echo/Yaml/raw/main/icons/Steam.png}
+  - {name: Steam,        <<: *Anchor_OP, icon: https://github.com/Seven1echo/Yaml/raw/main/icons/Steam.png}
   - {name: TikTok,       <<: *Anchor_OP, icon: https://github.com/Seven1echo/Yaml/raw/main/icons/TikTok.png}
   - {name: Twitter(X),   <<: *Anchor_OP, icon: https://github.com/Seven1echo/Yaml/raw/main/icons/Twitter.png}
   - {name: Telegram,     <<: *Anchor_OP, icon: https://github.com/Seven1echo/Yaml/raw/main/icons/Telegram.png}
@@ -178,8 +184,10 @@ proxy-groups:
 
 # ███████████████████████████ 规则匹配 ███████████████████████████
 rules:
+  - "AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((OR,((GEOSITE,cn),(GEOIP,cn,no-resolve)))))),REJECT"
   - "GEOSITE,private,国内直连"                                           # Private
   - "GEOIP,private,国内直连,no-resolve"                                  # Private
+  - "GEOSITE,category-games@cn,国内直连"                                 # 游戏直连
   - "GEOSITE,category-ai-!cn,AI"                                        # AI(国际)
   - "GEOSITE,youtube,YouTube"                                           # YouTube
   - "GEOSITE,google,Google"                                             # Google
@@ -209,7 +217,3 @@ rules:
 rule-providers: 
   add_direct_domain:    { <<: *Anchor_DN, url: "https://raw.githubusercontent.com/Seven1echo/Yaml/refs/heads/main/rules/Seven1_Direct_Domain.mrs"}
   cn_ip:                { <<: *Anchor_IP, url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/cn.mrs"}
-
-
-
-# ███████████████████████████ 配置结束 ███████████████████████████
